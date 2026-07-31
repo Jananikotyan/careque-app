@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --pista-green: #A8CFA8;
+    --soft-green: #DDEED8;
+    --light-green: #F4F9F1;
+    --dark-green: #315C46;
+    --text: #24352B;
+    --white: #FFFFFF;
+  }
+  
+  body {
+    @apply bg-[var(--light-green)] text-[var(--text)] font-sans antialiased;
+  }
+}
