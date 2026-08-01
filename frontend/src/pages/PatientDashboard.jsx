@@ -65,7 +65,16 @@ const PatientDashboard = () => {
         appointment_date: bookingDate,
         start_time: time
       });
-      toast.success('Appointment booked successfully!');
+      if (res.data.emailReceipt) {
+        toast.success('Appointment booked successfully! Opening your Email Receipt...', { autoClose: 4000 });
+        const receiptWindow = window.open('', '_blank', 'width=650,height=500');
+        if (receiptWindow) {
+          receiptWindow.document.write(res.data.emailReceipt);
+          receiptWindow.document.close();
+        }
+      } else {
+        toast.success('Appointment booked successfully!');
+      }
       navigate(`/patient/queue/${selectedDoctor.id}`);
     } catch (error) {
       toast.error(error.response?.data?.error?.message || 'Failed to book');

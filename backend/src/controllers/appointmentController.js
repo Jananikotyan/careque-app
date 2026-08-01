@@ -51,10 +51,10 @@ exports.createAppointment = async (req, res, next) => {
     const patientEmail = data.patients?.email || 'patient@example.com';
     const doctorName = data.doctors?.name || 'Doctor';
     
-    // We fire and forget this so it doesn't block the response
-    sendAppointmentConfirmation(patientEmail, patientName, doctorName, appointment_date, start_time);
+    // Await this so we can send the receipt HTML to the frontend (to bypass Render SMTP block)
+    const emailData = await sendAppointmentConfirmation(patientEmail, patientName, doctorName, appointment_date, start_time);
 
-    res.status(201).json({ message: 'Appointment booked successfully', appointment: { ...data, queue_position } });
+    res.status(201).json({ message: 'Appointment booked successfully', appointment: { ...data, queue_position }, emailReceipt: emailData?.html });
   } catch (error) {
     next(error);
   }

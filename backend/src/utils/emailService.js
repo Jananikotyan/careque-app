@@ -49,14 +49,10 @@ exports.sendAppointmentConfirmation = async (patientEmail, patientName, doctorNa
     });
 
     logger.info(`Email sent to ${patientEmail}. Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
-    return nodemailer.getTestMessageUrl(info);
+    return { previewUrl: nodemailer.getTestMessageUrl(info), html: htmlContent };
   } catch (error) {
     logger.error('Error sending email via SMTP: ', error.message);
     logger.info('--- RENDER FREE TIER FALLBACK ---');
-    logger.info('Since Render blocks free SMTP ports, here is the email that would have been sent:');
-    logger.info(`To: ${patientEmail}`);
-    logger.info(`Subject: Your Appointment Confirmation`);
-    logger.info(`Content: Appointment for ${patientName} with ${doctorName} on ${date} at ${time}`);
-    logger.info('---------------------------------');
+    return { html: htmlContent }; // Return the HTML so the frontend can display it directly!
   }
 };
