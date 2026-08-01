@@ -13,6 +13,8 @@ const PatientDashboard = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
+  const [bookingNotice, setBookingNotice] = useState('');
+  const [receiptHtml, setReceiptHtml] = useState('');
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -57,6 +59,11 @@ const PatientDashboard = () => {
     }
   };
 
+  const openEmailReceipt = (html) => {
+    if (!html) return;
+    setReceiptHtml(html);
+  };
+
   const handleBook = async (time) => {
     setLoading(true);
     try {
@@ -66,16 +73,16 @@ const PatientDashboard = () => {
         start_time: time
       });
       if (res.data.emailReceipt) {
-        toast.success('Appointment booked successfully! Opening your Email Receipt...', { autoClose: 4000 });
-        const receiptWindow = window.open('', '_blank', 'width=650,height=500');
-        if (receiptWindow) {
-          receiptWindow.document.write(res.data.emailReceipt);
-          receiptWindow.document.close();
-        }
+        const notice = 'Appointment booked successfully! Your confirmation receipt is opening.';
+        setBookingNotice(notice);
+        toast.success(notice, { autoClose: 4000 });
+        openEmailReceipt(res.data.emailReceipt);
       } else {
-        toast.success('Appointment booked successfully!');
+        const notice = 'Appointment booked successfully!';
+        setBookingNotice(notice);
+        toast.success(notice);
       }
-      navigate(`/patient/queue/${selectedDoctor.id}`);
+      setTimeout(() => navigate(`/patient/queue/${selectedDoctor.id}`), 1200);
     } catch (error) {
       toast.error(error.response?.data?.error?.message || 'Failed to book');
     } finally {
@@ -98,6 +105,29 @@ const PatientDashboard = () => {
           <LogOut size={18} /> Logout
         </button>
       </header>
+
+      {bookingNotice && (
+        <div className="mb-6 rounded-2xl border border-pista-green bg-soft-green px-4 py-3 text-dark-green font-semibold">
+          {bookingNotice}
+        </div>
+      )}
+
+      {receiptHtml && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-auto rounded-3xl bg-white p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-dark-green">Appointment Confirmation</h3>
+              <button
+                onClick={() => setReceiptHtml('')}
+                className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+              >
+                Close
+              </button>
+            </div>
+            <div className="rounded-2xl border border-gray-200 p-2" dangerouslySetInnerHTML={{ __html: receiptHtml }} />
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-4">

@@ -31,11 +31,13 @@ const authRoutes = require('./routes/auth');
 const appointmentRoutes = require('./routes/appointments');
 const doctorRoutes = require('./routes/doctors');
 const aiRoutes = require('./routes/ai');
+const patientRoutes = require('./routes/patients');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/patients', patientRoutes);
 
 // Socket Events
 io.on('connection', (socket) => {

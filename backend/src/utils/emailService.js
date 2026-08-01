@@ -3,27 +3,52 @@ const logger = require('../config/logger');
 
 let transporter;
 
-// Automatically generate a test Ethereal account on startup
-nodemailer.createTestAccount().then((account) => {
-  transporter = nodemailer.createTransport({
-    host: account.smtp.host,
-    port: account.smtp.port,
-    secure: account.smtp.secure,
-    auth: {
-      user: account.user,
-      pass: account.pass
-    }
-  });
-  logger.info('Ethereal Email Service initialized');
-}).catch((err) => {
-  logger.error('Failed to create Ethereal account: ', err);
-});
+const initializeTransporter = async () => {
+  if (transporter) return transporter;
+
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpHost = process.env.SMTP_HOST;
+
+  if (smtpHost && smtpUser && smtpPass) {
+    transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_SECURE === '1',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      }
+    });
+    logger.info('SMTP Email Service initialized');
+    return transporter;
+  }
+
+  try {
+    const account = await nodemailer.createTestAccount();
+    transporter = nodemailer.createTransport({
+      host: account.smtp.host,
+      port: account.smtp.port,
+      secure: account.smtp.secure,
+      auth: {
+        user: account.user,
+        pass: account.pass
+      }
+    });
+    logger.info('Ethereal Email Service initialized');
+  } catch (err) {
+    logger.error('Failed to create Ethereal account: ', err);
+  }
+
+  return transporter;
+};
 
 exports.sendAppointmentConfirmation = async (patientEmail, patientName, doctorName, date, time) => {
   try {
+    await initializeTransporter();
     if (!transporter) {
       logger.warn('Email transporter not ready yet');
-      return;
+      return { html: '' };
     }
 
     const htmlContent = `
@@ -42,7 +67,7 @@ exports.sendAppointmentConfirmation = async (patientEmail, patientName, doctorNa
     `;
 
     const info = await transporter.sendMail({
-      from: '"Hospital Management" <noreply@hospital.com>',
+      from: `"Hospital Management" <${process.env.EMAIL_FROM || 'noreply@hospital.com'}>`,
       to: patientEmail,
       subject: 'Your Appointment Confirmation',
       html: htmlContent
